@@ -78,34 +78,9 @@ html, body {
       <div class="sub">Your personal, searchable knowledge base for Hay Day — stored locally on this device. Export/import to move between phone & computer.</div>
     </div>
   </header>
-
-  <main>
-    <div class="wrap">
-      <div class="grid">
-        <section class="card">
-          <div class="k">Navigation</div>
-          <div class="tabs" id="tabs"></div>
-          <div class="hr"></div>
-          <div class="k">Search</div>
-          <input id="search" placeholder="Search characters, XP, materials…" />
-          <div class="hr"></div>
-          <div class="k">Backup</div>
-          <div class="row">
-            <button class="btn" id="exportBtn">Export JSON</button>
-            <label class="btn secondary" style="display:inline-flex;align-items:center;gap:8px;">
-              Import JSON
-              <input id="importFile" type="file" accept="application/json" style="display:none" />
-            </label>
-            <button class="btn danger" id="resetBtn">Reset</button>
-          </div>
-          <p class="small">Tip: export on your computer, then import on your phone to sync content.</p>
-        </section>
-
-        <section class="card" id="content"></section>
-      </div>
-    </div>
-  </main>
-
+main {
+  padding: 18px 16px 40px;
+}
 <script>
 const STORAGE_KEY = 'hayday_companion_v1';
 
