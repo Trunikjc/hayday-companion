@@ -1,0 +1,151 @@
+{
+  "characters": [
+    {
+      "name": "Greg",
+      "type": "NPC",
+      "notes": "Tutorial friend; appears as a character on Hay Day Wiki.",
+      "source": "https://hayday.fandom.com/wiki/Category:Characters"
+    },
+    {
+      "name": "Tom",
+      "type": "Helper",
+      "notes": "Helper NPC (listed in Characters category).",
+      "source": "https://hayday.fandom.com/wiki/Category:Characters"
+    },
+    {
+      "name": "Rose",
+      "type": "Helper",
+      "notes": "Farm Helper (animal caretaker). Unlocked at Farm Level 33 per Supercell Support.",
+      "source": "https://support.supercell.com/hay-day/en/articles/farm-helpers-rose-ernest.html"
+    },
+    {
+      "name": "Ernest",
+      "type": "Helper",
+      "notes": "Farm Helper (dairy & sugar). Unlocked at Farm Level 33 per Supercell Support.",
+      "source": "https://support.supercell.com/hay-day/en/articles/farm-helpers-rose-ernest.html"
+    },
+    {
+      "name": "Maggie",
+      "type": "Character/Helper",
+      "notes": "Listed in Characters category.",
+      "source": "https://hayday.fandom.com/wiki/Category:Characters"
+    },
+    {
+      "name": "Alfred",
+      "type": "Character",
+      "notes": "Listed in Characters category.",
+      "source": "https://hayday.fandom.com/wiki/Category:Characters"
+    },
+    {
+      "name": "Angus",
+      "type": "Character",
+      "notes": "Listed in Characters category.",
+      "source": "https://hayday.fandom.com/wiki/Category:Characters"
+    }
+  ],
+  "xp": {
+    "definition": "Experience (XP) is the player's level; gaining enough XP changes levels and unlocks new items/features.",
+    "howToEarn": [
+      "Harvest crops and animal goods",
+      "Craft items in production buildings",
+      "Fill truck, boat, and town visitor orders",
+      "Sell goods to visitors",
+      "Revive trees and bushes",
+      "Wake up pets or sanctuary animals",
+      "Unveil new production/service buildings",
+      "Collect rewards (e.g., Farm Pass)",
+      "Fish with lures; collect duck/lobster traps",
+      "Clear rocks/swamp; place decorations",
+      "Mine and collect ore"
+    ],
+    "source": "https://hayday.fandom.com/wiki/Experience"
+  },
+  "expansion": {
+    "overview": "You can expand land on the Farm, Fishing spots, and in the Town using expansion supplies.",
+    "farm": {
+      "availableFrom": "Farm Level 22",
+      "requires": [
+        "Land Deed",
+        "Mallet",
+        "Marker Stake"
+      ],
+      "specialDecorationAreas": {
+        "availableFrom": "Farm Level 25",
+        "requires": [
+          "Expansion Permit"
+        ]
+      }
+    },
+    "fishing": {
+      "availableFrom": "Farm Level 27 (when Fishing Lake is unlocked)",
+      "requires": [
+        "Land Deed",
+        "Mallet",
+        "Marker Stake"
+      ]
+    },
+    "town": {
+      "availableFrom": "Reputation Level 3",
+      "requires": [
+        "Map Piece",
+        "Land Deed",
+        "Mallet",
+        "Marker Stake"
+      ]
+    },
+    "sources": [
+      "https://support.supercell.com/hay-day/en/articles/land-expansion.html",
+      "https://hayday.fandom.com/wiki/Expansion"
+    ]
+  },
+  "materials": {
+    "markerStake": {
+      "unlockedAt": "Experience Level 22",
+      "usedFor": [
+        "Expand Farm",
+        "Expand Fishing Lake",
+        "Expand Town"
+      ],
+      "storedIn": "Barn",
+      "howToGet": [
+        "Harvest crops",
+        "Collect products/animal goods",
+        "Cut down trees and bushes",
+        "Feed pets",
+        "Open mystery boxes/packages",
+        "Spin Wheel of Fortune",
+        "Participate in global events",
+        "Fully satisfy a town visitor",
+        "Win derby prizes",
+        "Use mystery nets",
+        "Watch 'Night at the Movies' trailer",
+        "Redeem tokens in the Valley shop"
+      ],
+      "source": "https://hayday.fandom.com/wiki/Marker_Stake"
+    },
+    "townUpgradeMaterials": {
+      "examples": [
+        "Brick",
+        "Hammer",
+        "Hand Drill",
+        "Paint Bucket",
+        "Stone Block",
+        "Tar Bucket",
+        "Map Piece"
+      ],
+      "usedFor": "Upgrading Town service buildings (slots, coins bonus, XP/reputation bonus, service time)",
+      "source": "https://support.supercell.com/hay-day/en/articles/upgrade-service-building.html"
+    },
+    "expansionPermits": {
+      "unlockedAt": "Experience Level 25",
+      "notes": "Used for special expansion areas; not stored in the barn; cannot be bought/sold (per Hay Day Wiki).",
+      "howToGet": [
+        "Wheel of Fortune",
+        "Derby reward columns",
+        "Valley shop",
+        "Farm Pass"
+      ],
+      "source": "https://hayday.fandom.com/wiki/Expansion_Permit"
+    }
+  }
+}

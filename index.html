@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./icons/icon-192.png" />
+  <title>Hay Day Companion</title>
+  <style>
+    :root{--bg:#0b1220;--card:#0f172a;--muted:#94a3b8;--text:#e2e8f0;--accent:#22c55e;--border:#1f2a44;}
+    *{box-sizing:border-box;font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;}
+    body{margin:0;background:linear-gradient(120deg,#050815,#0b1220 40%,#07121a);color:var(--text);}
+    header{padding:20px 16px;position:sticky;top:0;background:rgba(11,18,32,.85);backdrop-filter: blur(10px);border-bottom:1px solid var(--border);}
+    .wrap{max-width:1100px;margin:0 auto;}
+    h1{margin:0;font-size:20px;letter-spacing:.2px;display:flex;align-items:center;gap:10px;}
+    .badge{font-size:12px;color:#052e12;background:rgba(34,197,94,.95);padding:2px 8px;border-radius:999px;}
+    .sub{margin-top:6px;color:var(--muted);font-size:13px;}
+    main{padding:18px 16px 40px;}
+    .grid{display:grid;grid-template-columns:280px 1fr;gap:14px;}
+    @media (max-width: 900px){.grid{grid-template-columns:1fr;}}
+    .card{background:rgba(15,23,42,.75);border:1px solid var(--border);border-radius:18px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);}
+    .tabs{display:flex;flex-wrap:wrap;gap:8px;}
+    .tab{border:1px solid var(--border);background:transparent;color:var(--text);padding:8px 10px;border-radius:999px;font-size:13px;cursor:pointer;}
+    .tab.active{background:rgba(34,197,94,.15);border-color:rgba(34,197,94,.35);}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+    input, textarea, select{width:100%;background:rgba(2,6,23,.45);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:10px 10px;font-size:14px;outline:none;}
+    textarea{min-height:120px;resize:vertical;}
+    .btn{background:rgba(34,197,94,.2);border:1px solid rgba(34,197,94,.35);color:var(--text);padding:10px 12px;border-radius:12px;cursor:pointer;font-weight:600;}
+    .btn.secondary{background:transparent;border:1px solid var(--border);}
+    .btn.danger{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.35);}
+    .list{display:flex;flex-direction:column;gap:10px;}
+    .item{padding:12px;border:1px solid var(--border);border-radius:16px;background:rgba(2,6,23,.25);}
+    .item h3{margin:0 0 6px;font-size:15px;}
+    .meta{color:var(--muted);font-size:12px;display:flex;gap:8px;flex-wrap:wrap;}
+    .pill{border:1px solid var(--border);border-radius:999px;padding:2px 8px;}
+    .k{color:var(--muted);font-size:12px;margin:0 0 6px;}
+    .hr{height:1px;background:var(--border);margin:10px 0;}
+    .small{font-size:12px;color:var(--muted);}
+    a{color:#7dd3fc;text-decoration:none;}
+    a:hover{text-decoration:underline;}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>Hay Day Companion <span class="badge">Offline</span></h1>
+      <div class="sub">Your personal, searchable knowledge base for Hay Day — stored locally on this device. Export/import to move between phone & computer.</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap">
+      <div class="grid">
+        <section class="card">
+          <div class="k">Navigation</div>
+          <div class="tabs" id="tabs"></div>
+          <div class="hr"></div>
+          <div class="k">Search</div>
+          <input id="search" placeholder="Search characters, XP, materials…" />
+          <div class="hr"></div>
+          <div class="k">Backup</div>
+          <div class="row">
+            <button class="btn" id="exportBtn">Export JSON</button>
+            <label class="btn secondary" style="display:inline-flex;align-items:center;gap:8px;">
+              Import JSON
+              <input id="importFile" type="file" accept="application/json" style="display:none" />
+            </label>
+            <button class="btn danger" id="resetBtn">Reset</button>
+          </div>
+          <p class="small">Tip: export on your computer, then import on your phone to sync content.</p>
+        </section>
+
+        <section class="card" id="content"></section>
+      </div>
+    </div>
+  </main>
+
+<script>
+const STORAGE_KEY = 'hayday_companion_v1';
+
+const TABS = [
+  { key: 'characters', label: 'Characters' },
+  { key: 'xp', label: 'XP & Leveling' },
+  { key: 'materials', label: 'Marker Stakes & Materials' },
+  { key: 'expansion', label: 'Expansion' },
+  { key: 'notes', label: 'My Notes' },
+  { key: 'sources', label: 'Sources' },
+];
+
+async function loadSeed(){
+  const res = await fetch('./data.json');
+  return await res.json();
+}
+
+function loadState(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); }catch(e){ return null; }
+}
+
+function saveState(state){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function el(tag, attrs={}, children=[]){
+  const n = document.createElement(tag);
+  Object.entries(attrs).forEach(([k,v])=>{
+    if(k==='class') n.className = v;
+    else if(k==='html') n.innerHTML = v;
+    else if(k.startsWith('on') && typeof v==='function') n.addEventListener(k.slice(2).toLowerCase(), v);
+    else n.setAttribute(k, v);
+  });
+  children.forEach(c=> n.appendChild(typeof c==='string'? document.createTextNode(c): c));
+  return n;
+}
+
+function download(filename, obj){
+  const blob = new Blob([JSON.stringify(obj, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  a.remove(); URL.revokeObjectURL(url);
+}
+
+function summarizeForSearch(state){
+  const parts = [];
+  state.characters.forEach(c=> parts.push(`${c.name} ${c.type||''} ${c.notes||''}`));
+  parts.push(state.xp.definition);
+  state.xp.howToEarn.forEach(x=> parts.push(x));
+  const ms = state.materials.markerStake;
+  parts.push(`Marker Stake ${ms.unlockedAt} ${ms.usedFor.join(' ')} ${ms.howToGet.join(' ')}`);
+  const ep = state.materials.expansionPermits;
+  parts.push(`Expansion Permit ${ep.unlockedAt} ${ep.notes} ${ep.howToGet.join(' ')}`);
+  parts.push(`Town materials ${state.materials.townUpgradeMaterials.examples.join(' ')}`);
+  return parts.join(' 
+ ');
+}
+
+function renderTabs(activeKey){
+  const container = document.getElementById('tabs');
+  container.innerHTML = '';
+  TABS.forEach(t=>{
+    container.appendChild(el('button', {class:`tab ${t.key===activeKey?'active':''}`, onclick:()=>setActive(t.key)}, [t.label]));
+  });
+}
+
+let state;
+let active = 'characters';
+let searchText = '';
+
+function setActive(key){
+  active = key;
+  render();
+}
+
+function renderCharacters(){
+  const q = searchText.trim().toLowerCase();
+  const list = state.characters
+    .filter(c=> !q || (`${c.name} ${c.type||''} ${c.notes||''}`).toLowerCase().includes(q))
+    .sort((a,b)=>a.name.localeCompare(b.name));
+
+  const form = el('div', {}, [
+    el('div', {class:'row'}, [
+      el('div', {style:'flex:1;min-width:220px;'}, [
+        el('div', {class:'k'}, ['Add a character / helper']),
+        el('input', {id:'cName', placeholder:'Name (e.g., Greg)'}),
+      ]),
+      el('div', {style:'flex:1;min-width:220px;'}, [
+        el('div', {class:'k'}, ['Type']),
+        el('select', {id:'cType'}, [
+          el('option', {value:'NPC'}, ['NPC']),
+          el('option', {value:'Helper'}, ['Helper']),
+          el('option', {value:'Visitor'}, ['Visitor']),
+          el('option', {value:'Other'}, ['Other']),
+        ]),
+      ]),
+    ]),
+    el('div', {style:'margin-top:10px;'}, [
+      el('div', {class:'k'}, ['Notes']),
+      el('input', {id:'cNotes', placeholder:'What do they do? unlock level? tips?'}),
+    ]),
+    el('div', {style:'margin-top:10px;'}, [
+      el('div', {class:'k'}, ['Source link (optional)']),
+      el('input', {id:'cSource', placeholder:'https://...'}),
+    ]),
+    el('div', {style:'margin-top:10px;'}, [
+      el('button', {class:'btn', onclick:()=>{
+        const name = document.getElementById('cName').value.trim();
+        if(!name) return;
+        state.characters.push({
+          name,
+          type: document.getElementById('cType').value,
+          notes: document.getElementById('cNotes').value.trim(),
+          source: document.getElementById('cSource').value.trim(),
+        });
+        saveState(state);
+        document.getElementById('cName').value='';
+        document.getElementById('cNotes').value='';
+        document.getElementById('cSource').value='';
+        render();
+      }}, ['Add'])
+    ])
+  ]);
+
+  const items = el('div', {class:'list'}, list.map((c, idx)=>{
+    const src = c.source ? ` • <a href="${c.source}" target="_blank" rel="noopener">source</a>` : '';
+    return el('div', {class:'item'}, [
+      el('h3', {}, [c.name]),
+      el('div', {class:'meta', html: `<span class='pill'>${c.type||'—'}</span>${src}`}),
+      c.notes ? el('div', {style:'margin-top:8px;'}, [c.notes]) : el('div', {class:'small'}, ['(no notes yet)']),
+      el('div', {style:'margin-top:10px;'}, [
+        el('button', {class:'btn secondary', onclick:()=>{
+          state.characters.splice(state.characters.findIndex(x=>x===c),1);
+          saveState(state);
+          render();
+        }}, ['Delete'])
+      ])
+    ]);
+  }));
+
+  return el('div', {}, [
+    el('h2', {}, ['Characters & Helpers']),
+    el('p', {class:'small', html: `Seed list includes several NPCs/helpers from the Hay Day Wiki character category; add the rest you care about (the category page is long).`} ),
+    form,
+    el('div', {class:'hr'}),
+    el('div', {class:'k'}, [`Showing ${list.length} entries`]),
+    items
+  ]);
+}
+
+function renderXP(){
+  const q = searchText.trim().toLowerCase();
+  const ways = state.xp.howToEarn.filter(x=>!q || x.toLowerCase().includes(q));
+  return el('div', {}, [
+    el('h2', {}, ['XP & Leveling']),
+    el('div', {class:'item'}, [
+      el('div', {class:'k'}, ['What XP means']),
+      el('div', {}, [state.xp.definition]),
+      el('div', {style:'margin-top:8px;'}, [
+        el('a', {href: state.xp.source, target:'_blank', rel:'noopener'}, ['Source'])
+      ])
+    ]),
+    el('div', {class:'item', style:'margin-top:12px;'}, [
+      el('div', {class:'k'}, ['Ways to earn XP (from source)']),
+      el('ul', {}, ways.map(w=> el('li', {}, [w]))),
+      el('div', {style:'margin-top:8px;'}, [
+        el('a', {href: state.xp.source, target:'_blank', rel:'noopener'}, ['Source'])
+      ])
+    ])
+  ]);
+}
+
+function renderMaterials(){
+  const ms = state.materials.markerStake;
+  const ep = state.materials.expansionPermits;
+  const town = state.materials.townUpgradeMaterials;
+
+  const q = searchText.trim().toLowerCase();
+  const msWays = ms.howToGet.filter(x=>!q || x.toLowerCase().includes(q));
+
+  // Simple inventory tracker
+  state.inventory = state.inventory || {"Marker Stake":0,"Land Deed":0,"Mallet":0,"Map Piece":0,"Expansion Permit":0};
+
+  const invKeys = Object.keys(state.inventory);
+
+  const inv = el('div', {class:'item'}, [
+    el('div', {class:'k'}, ['Quick inventory tracker (saved locally)']),
+    ...invKeys.map(k=>{
+      return el('div', {class:'row', style:'margin-top:8px;'}, [
+        el('div', {style:'flex:1;min-width:180px;'}, [el('span', {class:'pill'}, [k])]),
+        el('input', {type:'number', value: state.inventory[k], style:'max-width:180px;', onchange:(e)=>{
+          state.inventory[k] = parseInt(e.target.value||'0',10);
+          saveState(state);
+        }})
+      ])
+    }),
+    el('p', {class:'small', html:'Note: counts are just for you; they are not pulled from the game.'})
+  ]);
+
+  return el('div', {}, [
+    el('h2', {}, ['Marker Stakes & Other Components']),
+    el('div', {class:'item'}, [
+      el('h3', {}, ['Marker Stake']),
+      el('div', {class:'meta', html:`<span class='pill'>Unlocked: ${ms.unlockedAt}</span><span class='pill'>Stored: ${ms.storedIn}</span>`}),
+      el('div', {style:'margin-top:8px;'}, [
+        el('div', {class:'k'}, ['Used for']),
+        el('ul', {}, ms.usedFor.map(x=>el('li', {}, [x]))),
+      ]),
+      el('div', {style:'margin-top:8px;'}, [
+        el('div', {class:'k'}, ['How to acquire (from source)']),
+        el('ul', {}, msWays.map(x=>el('li', {}, [x]))),
+      ]),
+      el('div', {style:'margin-top:8px;'}, [
+        el('a', {href: ms.source, target:'_blank', rel:'noopener'}, ['Source'])
+      ])
+    ]),
+
+    el('div', {class:'item', style:'margin-top:12px;'}, [
+      el('h3', {}, ['Expansion Permit']),
+      el('div', {class:'meta', html:`<span class='pill'>Unlocked: ${ep.unlockedAt}</span>`}),
+      el('div', {style:'margin-top:8px;'}, [ep.notes]),
+      el('div', {style:'margin-top:8px;'}, [
+        el('div', {class:'k'}, ['How to acquire (from source)']),
+        el('ul', {}, ep.howToGet.map(x=>el('li', {}, [x]))),
+      ]),
+      el('div', {style:'margin-top:8px;'}, [
+        el('a', {href: ep.source, target:'_blank', rel:'noopener'}, ['Source'])
+      ])
+    ]),
+
+    el('div', {class:'item', style:'margin-top:12px;'}, [
+      el('h3', {}, ['Town upgrade materials']),
+      el('div', {style:'margin-top:6px;'}, [
+        el('div', {class:'k'}, ['Examples (from Supercell Support)']),
+        el('div', {class:'meta', html: town.examples.map(x=>`<span class='pill'>${x}</span>`).join(' ') })
+      ]),
+      el('div', {style:'margin-top:8px;'}, [town.usedFor]),
+      el('div', {style:'margin-top:8px;'}, [
+        el('a', {href: town.source, target:'_blank', rel:'noopener'}, ['Source'])
+      ])
+    ]),
+
+    el('div', {style:'margin-top:12px;'}, [inv])
+  ]);
+}
+
+function renderExpansion(){
+  const ex = state.expansion;
+  return el('div', {}, [
+    el('h2', {}, ['Expansion']),
+    el('p', {class:'small'}, [ex.overview]),
+
+    el('div', {class:'item'}, [
+      el('h3', {}, ['Farm']),
+      el('div', {class:'meta', html:`<span class='pill'>Available: ${ex.farm.availableFrom}</span>`}),
+      el('div', {style:'margin-top:8px;'}, [
+        el('div', {class:'k'}, ['Requires']),
+        el('div', {class:'meta', html: ex.farm.requires.map(x=>`<span class='pill'>${x}</span>`).join(' ') })
+      ]),
+      el('div', {style:'margin-top:8px;'}, [
+        el('div', {class:'k'}, ['Special decoration areas']),
+        el('div', {class:'meta', html:`<span class='pill'>Available: ${ex.farm.specialDecorationAreas.availableFrom}</span> <span class='pill'>Requires: ${ex.farm.specialDecorationAreas.requires.join(', ')}</span>`})
+      ])
+    ]),
+
+    el('div', {class:'item', style:'margin-top:12px;'}, [
+      el('h3', {}, ['Fishing spots']),
+      el('div', {class:'meta', html:`<span class='pill'>Available: ${ex.fishing.availableFrom}</span>`}),
+      el('div', {style:'margin-top:8px;'}, [
+        el('div', {class:'k'}, ['Requires']),
+        el('div', {class:'meta', html: ex.fishing.requires.map(x=>`<span class='pill'>${x}</span>`).join(' ') })
+      ])
+    ]),
+
+    el('div', {class:'item', style:'margin-top:12px;'}, [
+      el('h3', {}, ['Town']),
+      el('div', {class:'meta', html:`<span class='pill'>Available: ${ex.town.availableFrom}</span>`}),
+      el('div', {style:'margin-top:8px;'}, [
+        el('div', {class:'k'}, ['Requires']),
+        el('div', {class:'meta', html: ex.town.requires.map(x=>`<span class='pill'>${x}</span>`).join(' ') })
+      ])
+    ]),
+
+    el('div', {class:'item', style:'margin-top:12px;'}, [
+      el('div', {class:'k'}, ['Sources']),
+      el('ul', {}, ex.sources.map(s=> el('li', {}, [el('a', {href:s, target:'_blank', rel:'noopener'}, [s])])) )
+    ])
+  ]);
+}
+
+function renderNotes(){
+  state.notes = state.notes || '';
+  return el('div', {}, [
+    el('h2', {}, ['My Notes']),
+    el('p', {class:'small'}, ['Use this like a personal wiki. It stays on this device until you export/import.']),
+    el('textarea', {id:'notesArea'}, [state.notes]),
+    el('div', {style:'margin-top:10px;'}, [
+      el('button', {class:'btn', onclick:()=>{
+        state.notes = document.getElementById('notesArea').value;
+        saveState(state);
+        alert('Saved locally.');
+      }}, ['Save Notes'])
+    ])
+  ]);
+}
+
+function renderSources(){
+  const links = new Set();
+  // Collect known sources
+  state.characters.forEach(c=> c.source && links.add(c.source));
+  links.add(state.xp.source);
+  state.expansion.sources.forEach(s=> links.add(s));
+  links.add(state.materials.markerStake.source);
+  links.add(state.materials.townUpgradeMaterials.source);
+  links.add(state.materials.expansionPermits.source);
+
+  return el('div', {}, [
+    el('h2', {}, ['Sources']),
+    el('p', {class:'small'}, ['These are the reference pages used for the seeded content.']),
+    el('ul', {}, Array.from(links).sort().map(u=> el('li', {}, [el('a', {href:u, target:'_blank', rel:'noopener'}, [u])]))),
+    el('div', {class:'hr'}),
+    el('p', {class:'small', html:'Want a fuller character list? Open the Hay Day Wiki character category and add the ones you care about.'})
+  ]);
+}
+
+function render(){
+  renderTabs(active);
+
+  const content = document.getElementById('content');
+  content.innerHTML = '';
+
+  // lightweight search help: if query present but active tab doesn't match, still show a hint
+  if(searchText.trim()){
+    const hay = summarizeForSearch(state).toLowerCase();
+    if(!hay.includes(searchText.trim().toLowerCase())){
+      content.appendChild(el('div', {class:'item'}, [
+        el('h3', {}, ['No matches found']),
+        el('div', {class:'small'}, ['Try a different keyword (e.g., "stake", "XP", "Wheel", "Greg").'])
+      ]));
+      return;
+    }
+  }
+
+  if(active==='characters') content.appendChild(renderCharacters());
+  else if(active==='xp') content.appendChild(renderXP());
+  else if(active==='materials') content.appendChild(renderMaterials());
+  else if(active==='expansion') content.appendChild(renderExpansion());
+  else if(active==='notes') content.appendChild(renderNotes());
+  else if(active==='sources') content.appendChild(renderSources());
+}
+
+async function init(){
+  const existing = loadState();
+  if(existing){
+    state = existing;
+  } else {
+    state = await loadSeed();
+    saveState(state);
+  }
+
+  document.getElementById('search').addEventListener('input', (e)=>{ searchText = e.target.value; render(); });
+
+  document.getElementById('exportBtn').addEventListener('click', ()=>{
+    download('hayday-companion-backup.json', state);
+  });
+
+  document.getElementById('importFile').addEventListener('change', async (e)=>{
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+    const txt = await file.text();
+    try{
+      const imported = JSON.parse(txt);
+      state = imported;
+      saveState(state);
+      alert('Imported!');
+      render();
+    }catch(err){
+      alert('That file does not look like valid JSON.');
+    }
+    e.target.value = '';
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', async ()=>{
+    if(!confirm('Reset local data to the original seed?')) return;
+    state = await loadSeed();
+    saveState(state);
+    render();
+  });
+
+  // Service worker
+  if('serviceWorker' in navigator){
+    try{ await navigator.serviceWorker.register('./sw.js'); }catch(e){}
+  }
+
+  render();
+}
+
+init();
+</script>
+</body>
+</html>
